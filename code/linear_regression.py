@@ -22,6 +22,9 @@ import numpy
 import theano
 import theano.tensor as T
 
+from scipy import io
+import random
+
 
 class LinearRegression(object):
     """Linear Regression Class
@@ -61,9 +64,9 @@ class LinearRegression(object):
         # parameters of the model
         self.params = [self.W, self.b]
         
-    def loss_function(self, y):
-        differences = y - T.dot(input, self.W) + self.b
-        loss = T.sum(differences ** 2)
+    def loss_function(self, param):
+        #param = error in regression (y - y_predicted)
+        loss = T.sum(param ** 2)
         return loss
 
     def errors(self, y):
@@ -75,7 +78,7 @@ class LinearRegression(object):
         :param y: corresponds to a vector that gives for each example the
                   correct label
         """
-
+        #TODO: Has to be modified!
         # check if y has same dimension of y_pred
         if y.ndim != self.y_pred.ndim:
             raise TypeError('y should have the same shape as self.y_pred',
@@ -92,8 +95,6 @@ class LinearRegression(object):
 def load_data(dataset):
     ''' Loads the dataset
 
-    :type dataset: string
-    :param dataset: the path to the dataset (here MNIST)
     '''
 
     #############
@@ -101,25 +102,22 @@ def load_data(dataset):
     #############
 
     # Download the MNIST dataset if it is not present
-    data_dir, data_file = os.path.split(dataset)
-    if data_dir == "" and not os.path.isfile(dataset):
-        # Check if dataset is in the data directory.
-        new_path = os.path.join(os.path.split(__file__)[0], "..", "data", dataset)
-        if os.path.isfile(new_path) or data_file == 'mnist.pkl.gz':
-            dataset = new_path
-
-    if (not os.path.isfile(dataset)) and data_file == 'mnist.pkl.gz':
-        import urllib
-        origin = 'http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz'
-        print 'Downloading data from %s' % origin
-        urllib.urlretrieve(origin, dataset)
 
     print '... loading data'
 
     # Load the dataset
-    f = gzip.open(dataset, 'rb')
-    train_set, valid_set, test_set = cPickle.load(f)
-    f.close()
+    data = io.loadmat('../data/data.mat')
+    X = data['X']
+    y = data['y']
+    datasetComplete = zip(X, y)
+    trainSetCount = len(datasetComplete)*6/10
+    testSetCount = len(datasetComplete)*2/10
+    validationSetCount = testSetCount
+    random.shuffle(datasetComplete)
+    train_set = datasetComplete[0:trainSetCount]
+    valid_set = datasetComplete[trainSetCount:trainSetCount+validationSetCount]
+    test_set = datasetComplete[trainSetCount+validationSetCount:]
+
     #train_set, valid_set, test_set format: tuple(input, target)
     #input is an numpy.ndarray of 2 dimensions (a matrix)
     #witch row's correspond to an example. target is a
@@ -136,7 +134,8 @@ def load_data(dataset):
         is needed (the default behaviour if the data is not in a shared
         variable) would lead to a large decrease in performance.
         """
-        data_x, data_y = data_xy
+        data_x = [data_xy[i][0] for i in range(0,len(data_xy))]
+        data_y = [data_xy[i][1] for i in range(0,len(data_xy))]
         shared_x = theano.shared(numpy.asarray(data_x,
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
@@ -150,7 +149,7 @@ def load_data(dataset):
         # floats it doesn't make sense) therefore instead of returning
         # ``shared_y`` we will have to cast it to int. This little hack
         # lets ous get around this issue
-        return shared_x, T.cast(shared_y, 'int32')
+        return shared_x, T.cast(shared_y, 'float32')
 
     test_set_x, test_set_y = shared_dataset(test_set)
     valid_set_x, valid_set_y = shared_dataset(valid_set)
@@ -161,8 +160,8 @@ def load_data(dataset):
     return rval
 
 
-def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
-                           dataset='mnist.pkl.gz',
+def sgd_optimization_linear_regression(learning_rate=0.13, n_epochs=1000,
+                           dataset='data.mat',
                            batch_size=600):
     """
     Demonstrate stochastic gradient descent optimization of a log-linear
@@ -205,7 +204,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                            # [int] labels
 
     # construct the linear regression class
-    predictor = LinearRegression(input=x, n_in=28 * 28)
+    predictor = LinearRegression(input=x, n_in=2)
 
     # the cost we minimize during training is the negative log likelihood of
     # the model in symbolic format
@@ -319,4 +318,4 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                           ' ran for %.1fs' % ((end_time - start_time)))
 
 if __name__ == '__main__':
-    sgd_optimization_mnist()
+    sgd_optimization_linear_regression()
