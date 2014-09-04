@@ -66,6 +66,7 @@ class LinearRegression(object):
         
     def loss_function(self, param):
         #param = error in regression (y - y_predicted)
+        #TODO: Has to be checked!
         loss = T.sum(param ** 2)
         return loss
 
