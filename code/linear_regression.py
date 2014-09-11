@@ -48,9 +48,11 @@ class LinearRegression(object):
         """
 
         # initialize with 0 the weights W as a matrix of shape (n_in, 1)
-        self.W = theano.shared(value=numpy.zeros((n_in, 1),
-                                                 dtype=theano.config.floatX),
-                                name='W', borrow=True)
+        ''
+        #self.W = theano.shared(value=numpy.zeros((n_in, 1), dtype=theano.config.floatX), name='W', borrow=True) #original
+        self.W = theano.shared(value=numpy.zeros(shape = (n_in+1, ), dtype=theano.config.floatX), name='W', borrow=True)
+        #var_theta = theano.shared(value = np.zeros(shape = (n_feats+1, ), dtype = theano.config.floatX), name = 'theta', borrow = True)
+                                
         # initialize the baises b as a vector of n_out 0s
         self.b = theano.shared(value=numpy.zeros((1,),
                                                  dtype=theano.config.floatX),
@@ -59,7 +61,7 @@ class LinearRegression(object):
         # compute vector of numeric predictions in symbolic form
         self.p_y_given_x = T.dot(input, self.W) + self.b
 
-        self.y_pred = self.p_y_given_x
+        self.y_pred = self.p_y_given_x #This has to be ndim = 1
 
         # parameters of the model
         self.params = [self.W, self.b]
