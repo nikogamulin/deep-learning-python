@@ -17,7 +17,7 @@ import os
 import sys
 import time
 
-import numpy
+import numpy as np
 
 import theano
 import theano.tensor as T
@@ -27,6 +27,7 @@ import random
 
 
 class LinearRegression(object):
+    #TODO: copy code from http://nbviewer.ipython.org/github/dolaameng/tutorials/blob/master/ml-tutorials/COURSE_Andrew_Ng_1.ipynb
     """Linear Regression Class
 
     The linear regression is fully described by a weight matrix :math:`W`
@@ -48,20 +49,13 @@ class LinearRegression(object):
         """
 
         # initialize with 0 the weights W as a matrix of shape (n_in, 1)
-        ''
-        #self.W = theano.shared(value=numpy.zeros((n_in, 1), dtype=theano.config.floatX), name='W', borrow=True) #original
-        self.W = theano.shared(value=numpy.zeros(shape = (n_in+1, ), dtype=theano.config.floatX), name='W', borrow=True)
-        #var_theta = theano.shared(value = np.zeros(shape = (n_feats+1, ), dtype = theano.config.floatX), name = 'theta', borrow = True)
+        self.theta = theano.shared(value = np.zeros(shape = (n_in+1, ), dtype = theano.config.floatX), name = 'W', borrow = True)
+        self.W = self.theta[:n_in].reshape((n_in, ))
                                 
         # initialize the baises b as a vector of n_out 0s
-        self.b = theano.shared(value=numpy.zeros((1,),
-                                                 dtype=theano.config.floatX),
-                               name='b', borrow=True)
+        self.b = self.theta[n_in:].reshape((1, 1))
 
-        # compute vector of numeric predictions in symbolic form
-        self.p_y_given_x = T.dot(input, self.W) + self.b
-
-        self.y_pred = self.p_y_given_x #This has to be ndim = 1
+        self.y_pred = T.dot(input, self.W) + self.b
 
         # parameters of the model
         self.params = [self.W, self.b]
